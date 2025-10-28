@@ -1,6 +1,6 @@
 # Node::Red
 
-A Ruby client library for the Node-RED Admin HTTP API. This gem provides a comprehensive wrapper around the Node-RED Admin API, allowing you to programmatically manage flows, nodes, settings, and authentication.
+A Ruby client library for the [Node-RED Admin HTTP API](https://nodered.org/docs/api/admin/). This gem provides a comprehensive wrapper around the Node-RED Admin API, allowing you to programmatically manage flows, nodes, settings, and authentication.
 
 ## Installation
 
