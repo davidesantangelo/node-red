@@ -56,44 +56,6 @@ begin
   puts "=== Deploying Complete Flow Configuration ==="
 
   # Create a simple flow with an inject and debug node
-  complete_flows = [
-    {
-      id: "flow1",
-      type: "tab",
-      label: "Test Flow"
-    },
-    {
-      id: "inject1",
-      type: "inject",
-      z: "flow1",
-      name: "Test Inject",
-      props: [{ p: "payload" }],
-      repeat: "",
-      crontab: "",
-      once: false,
-      onceDelay: 0.1,
-      topic: "",
-      payload: "Hello from Ruby!",
-      payloadType: "str",
-      x: 150,
-      y: 100
-    },
-    {
-      id: "debug1",
-      type: "debug",
-      z: "flow1",
-      name: "Test Debug",
-      active: true,
-      tosidebar: true,
-      console: false,
-      tostatus: false,
-      complete: "payload",
-      targetType: "msg",
-      x: 350,
-      y: 100,
-      wires: []
-    }
-  ]
 
   # NOTE: Be careful with deploy_flows as it replaces ALL flows
   # Uncomment the following lines to deploy

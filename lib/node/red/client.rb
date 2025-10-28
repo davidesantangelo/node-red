@@ -286,34 +286,70 @@ module Node
       def handle_response(response)
         case response
         when Net::HTTPSuccess
-          response.body && !response.body.empty? ? JSON.parse(response.body) : {}
+          parse_response_body(response)
+        when Net::HTTPBadRequest
+          raise_api_error(BadRequestError, response)
         when Net::HTTPUnauthorized
-          raise AuthenticationError, "Authentication failed: #{response.code} #{response.message}"
+          raise_api_error(AuthenticationError, response)
         when Net::HTTPNotFound
-          raise NotFoundError, "Resource not found: #{response.code} #{response.message}"
+          raise_api_error(NotFoundError, response)
+        when Net::HTTPConflict
+          raise_api_error(ConflictError, response)
         when Net::HTTPClientError
-          error_message = parse_error_message(response)
-          raise ApiError, "API error: #{response.code} #{error_message}"
+          raise_api_error(ApiError, response)
         when Net::HTTPServerError
-          raise ServerError, "Server error: #{response.code} #{response.message}"
+          raise_api_error(ServerError, response)
         else
-          raise ApiError, "Unexpected response: #{response.code} #{response.message}"
+          raise_api_error(UnexpectedResponseError, response)
         end
       end
 
-      # Parse error message from response
+      # Parse a successful HTTP response body, ensuring JSON content
       #
       # @param response [Net::HTTPResponse] The HTTP response
-      # @return [String] Error message
-      def parse_error_message(response)
-        return response.message unless response.body && !response.body.empty?
+      # @return [Hash, Array] Parsed JSON response or empty hash for blank body
+      def parse_response_body(response)
+        body = response.body
+        return {} if body.nil? || body.strip.empty?
 
-        begin
-          error_data = JSON.parse(response.body)
-          error_data["message"] || error_data["error"] || response.message
-        rescue JSON::ParserError
-          response.message
-        end
+        JSON.parse(body)
+      rescue JSON::ParserError => e
+        raise UnexpectedResponseError.new(
+          "Invalid JSON response: #{e.message}",
+          status: response.code.to_i,
+          details: { body: body }
+        )
+      end
+
+      # Raise a structured API error based on the HTTP response
+      #
+      # @param error_class [Class<ApiError>] The error class to raise
+      # @param response [Net::HTTPResponse] The HTTP response
+      # @raise [ApiError]
+      def raise_api_error(error_class, response)
+        message, error_code, details = extract_error_details(response)
+        raise error_class.new(
+          message,
+          status: response.code.to_i,
+          code: error_code,
+          details: details
+        )
+      end
+
+      # Extract error details from a failed HTTP response
+      #
+      # @param response [Net::HTTPResponse] The HTTP response
+      # @return [Array(String, String, Hash, nil)] message, error code and raw details
+      def extract_error_details(response)
+        body = response.body
+        return [response.message, nil, nil] if body.nil? || body.strip.empty?
+
+        data = JSON.parse(body)
+        message = data["message"] || data["error"] || response.message
+        error_code = data["code"]
+        [message, error_code, data]
+      rescue JSON::ParserError
+        [response.message, nil, { raw_body: body }]
       end
     end
   end

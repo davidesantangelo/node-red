@@ -140,6 +140,16 @@ rescue Node::Red::ApiError => e
 end
 ```
 
+Each error object carries contextual information to help with debugging:
+
+```ruby
+rescue Node::Red::ApiError => e
+  puts e.status   # => 400, 401, 404, 409, 500, ...
+  puts e.code     # => "invalid_request", "module_already_loaded", ... (may be nil)
+  puts e.details  # => full parsed response body, if available
+end
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
